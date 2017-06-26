@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Inventory_App</string>
+    <string name="title_activity_main2">Main2Activity</string>
+    <string name="menu_main_delete_all">Delete All order</string>
+    <string name="menu_edit_delete">Delete Order</string>
+    <string name="menu_edit_save">Save Order</string>
+
+    <string name="Item_name">Item name: </string>
+    <string name="Item_price">Price: </string>
+    <string name="Item_quantity_available">Available in stock: </string>
+    <string name="Supplier">Supplier: </string>
+    <string name="Resuply">Resupply</string>
+    <string name="Phone">Phone: </string>
+    <string name="URL">URL</string>
+    <string name="Quantity">Quantity</string>
+    <string name="main">Main Page</string>
+    <string name="Settings">Settings</string>
+    <string name="title_activity_navactivity">navactivity</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+</resources>
