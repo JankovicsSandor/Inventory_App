@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="array_supplier_options">
+        <item>@string/provider1</item>
+        <item>@string/provider2</item>
+        <item>@string/provider3</item>
+        <item>@string/provider4</item>
+        <item>@string/provider5</item>
+        <item>@string/provider1</item>
+        <item>@string/provider2</item>
+        <item>@string/provider4</item>
+        <item>@string/provider5</item>
+        <item>@string/provider3</item>
+        <item>@string/provider2</item>
+    </string-array>
+</resources>

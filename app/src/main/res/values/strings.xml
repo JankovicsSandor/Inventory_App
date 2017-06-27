@@ -21,4 +21,18 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+    <string name="provider1">Haz bt</string>
+    <string name="provider2">Kis bt</string>
+    <string name="provider3">School inc</string>
+    <string name="provider4">Asztal kft</string>
+    <string name="provider5">Wood rt</string>
+
+    <string name="error_saving">Error saving the item</string>
+    <string name="succesfull_saving">Saved succesfull</string>
+
+    <string name="error_updating">Error with updating</string>
+    <string name="succesfull_update">Succesfull update</string>
+
+    <string name="addItem">Add a new Item</string>
+    <string name="editItem">Edit an Item</string>
 </resources>

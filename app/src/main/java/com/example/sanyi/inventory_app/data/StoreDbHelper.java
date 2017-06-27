@@ -24,10 +24,11 @@ public class StoreDbHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         String CREATE_DATABASE_STORAGE_TABLE = "CREATE TABLE" + StoreEntry.TABLE_NAME + " ("
                 + StoreEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT ,"
+                + StoreEntry.COLUMN_PICTURE_PATH + " TEXT,"
                 + StoreEntry.COLUMN_ITEM_NAME + " TEXT NOT NULL, "
                 + StoreEntry.COLUMN_PRICE + " INTEGER NOT NULL,"
-                + StoreEntry.COLUMN_ITEMNUMBER + " INTEGER NOT NULL, "
-                + StoreEntry.COLUMN_SUPPLIER + " TEXT NOT NULL, "
+                + StoreEntry.COLUMN_ITEM_NUMBER + " INTEGER NOT NULL, "
+                + StoreEntry.COLUMN_SUPPLIER + " INTEGER NOT NULL, "
                 + StoreEntry.COLUMN_PHONE + " TEXT, "
                 + StoreEntry.COLUMN_URL + " TEXT);";
         db.execSQL(CREATE_DATABASE_STORAGE_TABLE);

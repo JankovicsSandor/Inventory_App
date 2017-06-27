@@ -24,6 +24,10 @@
         <activity
             android:name=".EditorActivity"
             android:parentActivityName=".MainActivity"/>
+        <provider
+            android:authorities="com.example.sanyi.inventory_app"
+            android:name=".data.StoreProvider"
+            android:exported="false"/>
     </application>
 
 </manifest>
