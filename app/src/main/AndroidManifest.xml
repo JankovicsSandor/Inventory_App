@@ -23,7 +23,6 @@
         </activity>
         <activity
             android:name=".EditorActivity"
-            android:screenOrientation="landscape"
             android:parentActivityName=".MainActivity"/>
     </application>
 

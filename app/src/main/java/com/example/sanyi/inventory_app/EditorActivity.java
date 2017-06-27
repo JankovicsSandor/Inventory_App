@@ -25,7 +25,7 @@ public class EditorActivity extends AppCompatActivity {
     Integer REQUEST_CAMERA = 1, SELECT_FILE = 0;
     ImageView productImage;
     Bitmap photoToSet;
-    Uri uriPathToPicture;
+    Uri uriPathToPicture=null;
     String pathToPicture;
 
     @Override
