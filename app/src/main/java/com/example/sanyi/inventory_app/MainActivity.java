@@ -1,27 +1,29 @@
 package com.example.sanyi.inventory_app;
 
 import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.example.sanyi.inventory_app.data.StoreContract.StoreEntry;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final int ITEM_LOADER = 0;
-
+    public static String[] array;
     ProductCursorAdapter mAdapter;
 
     FloatingActionButton modify;
@@ -33,11 +35,12 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             startActivity(intent);
         }
     };
-
+Uri currentURi;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        array=getResources().getStringArray(R.array.array_supplier_options);
         modify = (FloatingActionButton) findViewById(R.id.orderNew);
         modify.setOnClickListener(floatingListener);
 
@@ -48,29 +51,52 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         mAdapter = new ProductCursorAdapter(this, null);
         itemListView.setAdapter(mAdapter);
-
         itemListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                TextView helper=(TextView) view.findViewById(R.id.product_quantity);
+                int currentvalue=Integer.parseInt(helper.getText().toString());
+
+
+                ContentValues values=new ContentValues();
+                values.put(StoreEntry.COLUMN_ITEM_NUMBER,currentvalue-1);
+                if(StoreEntry.isValidnumber(currentvalue-1)){
+                    Uri toBeModified=ContentUris.withAppendedId(StoreEntry.CONTENT_URI,id);
+                    int rowsAffected=getContentResolver().update(toBeModified,values,null,null);
+                }
+                else{
+                    Uri toBeModified=ContentUris.withAppendedId(StoreEntry.CONTENT_URI,id);
+                    int rowsAffected=getContentResolver().delete(toBeModified,helper.getText().toString(),null);
+                }
+
+            }
+        });
+        itemListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(MainActivity.this, EditorActivity.class);
 
-                Uri currentURi = ContentUris.withAppendedId(StoreEntry.CONTENT_URI, id);
+                currentURi = ContentUris.withAppendedId(StoreEntry.CONTENT_URI, id);
                 intent.setData(currentURi);
                 startActivity(intent);
+                return true;
             }
         });
 
-        getLoaderManager().initLoader(ITEM_LOADER, null,this);
-
+        getSupportLoaderManager().initLoader(ITEM_LOADER, null,this);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_delete_all:
-                //TODO implement delete all method
+                deletallItem();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void deletallItem() {
+        int rowsDeleted=getContentResolver().delete(StoreEntry.CONTENT_URI,null,null);
     }
 
     @Override
@@ -86,8 +112,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                StoreEntry._ID,
                StoreEntry.COLUMN_PICTURE_PATH,
                StoreEntry.COLUMN_ITEM_NAME,
-               StoreEntry.COLUMN_SUPPLIER,
-               StoreEntry.COLUMN_PRICE};
+               StoreEntry.COLUMN_PRICE,
+               StoreEntry.COLUMN_ITEM_NUMBER,
+               StoreEntry.COLUMN_SUPPLIER};
         // This will execute the ContentProvider's query method on the background thread
         return new CursorLoader(this,
                 StoreEntry.CONTENT_URI,

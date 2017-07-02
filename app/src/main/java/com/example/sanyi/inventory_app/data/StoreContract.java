@@ -25,6 +25,7 @@ public class StoreContract {
 
         public final static String TABLE_NAME="storage";
 
+        // Column names for the database
         public final static String _ID=BaseColumns._ID;
         public final static String COLUMN_ITEM_NAME="item_name";
         public final static String COLUMN_PRICE="price";

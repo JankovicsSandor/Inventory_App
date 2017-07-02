@@ -56,6 +56,7 @@
                 <EditText
                     android:id="@+id/PriceEditText"
                     android:layout_width="0dp"
+                    android:inputType="number"
                     android:layout_height="wrap_content"
                     android:layout_weight="2" />
             </LinearLayout>
@@ -94,23 +95,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/Resuply" />
-
-                <ImageButton
-                    android:id="@+id/callUserId"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/resupplyId"
-                    android:layout_margin="5dp"
-                    android:src="@drawable/ic_call_black_24dp" />
-
-                <ImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/resupplyId"
-                    android:layout_margin="5dp"
-                    android:layout_marginLeft="6dp"
-                    android:layout_toRightOf="@id/callUserId"
-                    android:src="@drawable/ic_web_black_24dp" />
             </RelativeLayout>
 
             <LinearLayout
@@ -132,6 +116,7 @@
                     <EditText
                         android:id="@+id/PhoneEditText"
                         android:layout_width="0dp"
+                        android:inputType="number"
                         android:layout_height="wrap_content"
                         android:layout_weight="2" />
                 </LinearLayout>
@@ -149,6 +134,7 @@
                     <EditText
                         android:id="@+id/URLEditText"
                         android:layout_width="0dp"
+                        android:inputType="textWebEditText"
                         android:layout_height="wrap_content"
                         android:layout_weight="2" />
                 </LinearLayout>

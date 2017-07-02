@@ -20,9 +20,10 @@ public class StoreDbHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    // Setting up database
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String CREATE_DATABASE_STORAGE_TABLE = "CREATE TABLE" + StoreEntry.TABLE_NAME + " ("
+        String CREATE_DATABASE_STORAGE_TABLE = "CREATE TABLE " + StoreEntry.TABLE_NAME + " ("
                 + StoreEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT ,"
                 + StoreEntry.COLUMN_PICTURE_PATH + " TEXT,"
                 + StoreEntry.COLUMN_ITEM_NAME + " TEXT NOT NULL, "

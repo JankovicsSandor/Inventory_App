@@ -89,7 +89,7 @@ public class StoreProvider extends ContentProvider{
                 throw new IllegalStateException("Unknown Uri"+uri+"with match"+matchCode);
         }
     }
-
+    // SQL insert
     @Nullable
     @Override
     public Uri insert(@NonNull Uri uri, @Nullable ContentValues values) {
@@ -101,7 +101,7 @@ public class StoreProvider extends ContentProvider{
                 throw new IllegalArgumentException("Insertion is not supported for "+uri);
         }
     }
-
+    //Insert helper method
     private Uri insertItem(Uri uri, ContentValues values) {
 
         itemName=values.getAsString(StoreEntry.COLUMN_ITEM_NAME);

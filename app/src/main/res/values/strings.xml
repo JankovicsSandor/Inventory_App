@@ -35,4 +35,26 @@
 
     <string name="addItem">Add a new Item</string>
     <string name="editItem">Edit an Item</string>
+
+    <string name="alerDialogTitle">Discard your changes and quit editing?</string>
+    <string name="plusAnswer">Discard</string>
+    <string name="negativeAnswer">Keep editing</string>
+
+    <string name="deleteItem">Are you sure you want to delete this item?</string>
+    <string name="deleteYes">Yes,Delete</string>
+    <string name="deleteNo">No,Keep it</string>
+    <string name="error_delete">Error with deleting item</string>
+    <string name="succesfull_delete">Item deleted</string>
+
+    <string name="sell_one">Sell</string>
+
+    <string name="name_empty">Item must have a name</string>
+    <string name="price_empty">Item must have a valid_price</string>
+    <string name="phone_empty">Supplier must have a phone number</string>
+    <string name="url_empty">Supplier must have a webpage</string>
+    <string name="quantity_empty">Item must have a valid quantity</string>
+
+    <string name="total_in_list">Total value in List</string>
+
+    <string name="empty_list">NO DATA</string>
 </resources>
