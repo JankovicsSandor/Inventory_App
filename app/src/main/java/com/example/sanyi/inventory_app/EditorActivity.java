@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -26,7 +25,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.SparseIntArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -43,10 +41,11 @@ import com.example.sanyi.inventory_app.data.StoreContract.StoreEntry;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public class EditorActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     //Code to decide which action to be taken
@@ -219,6 +218,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             // Display the loader data
             getSupportLoaderManager().initLoader(EXISTING_ITEM_LOADER, null, this);
         }
+        Log.e("PHOTO TO BE SETTED", pathToPicture);
         if (photoSetted) {
             productImage.setImageURI(Uri.parse(pathToPicture));
         }
@@ -341,14 +341,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         }
     }
 
-    public void onPermissionsGranted(int requestcode) {
-    }
-
-    private SparseIntArray mErrorString;
-
     // Image selector function
     private void SelectImage() {
-        mErrorString = new SparseIntArray();
 
         final CharSequence[] items = {"Camera", "Gallery", "Cancel"};
         AlertDialog.Builder builder = new AlertDialog.Builder(EditorActivity.this);
@@ -357,31 +351,68 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             @Override
             public void onClick(DialogInterface dialog, int i) {
                 if (items[i].equals("Camera")) {
-                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    startActivityForResult(intent, REQUEST_CAMERA);
-
-                } else if (items[i].equals("Gallery")) {
-                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    intent.setType("image/*");
-                    intent.setAction(Intent.ACTION_GET_CONTENT);
-                    intent.putExtra("crop", "true");
-                    intent.putExtra("aspectX", 2);
-                    intent.putExtra("aspectY", 1);
-                    intent.putExtra("outputX", 200);
-                    intent.putExtra("outputY", 150);
-                    try {
-                        intent.putExtra("return-data", true);
-                        startActivityForResult(intent, SELECT_FILE);
-                    } catch (ActivityNotFoundException e) {
-                        Log.e("Activity", "not found");
+                    // User has permissions for everything
+                    if (checkPermissions()) {
+                        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        startActivityForResult(intent, REQUEST_CAMERA);
                     }
-
+                } else if (items[i].equals("Gallery")) {
+                    if (checkPermissionsGalery()) {
+                        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                        intent.setType("image/*");
+                        intent.setAction(Intent.ACTION_GET_CONTENT);
+                        intent.putExtra("crop", "true");
+                        intent.putExtra("aspectX", 2);
+                        intent.putExtra("aspectY", 1);
+                        intent.putExtra("outputX", 200);
+                        intent.putExtra("outputY", 150);
+                        try {
+                            intent.putExtra("return data", true);
+                            startActivityForResult(intent, SELECT_FILE);
+                        } catch (ActivityNotFoundException e) {
+                            Log.e("Activity", "not found");
+                        }
+                    }
                 } else if (items[i].equals("Cancel")) {
                     dialog.dismiss();
                 }
             }
         });
         builder.show();
+    }
+
+    private boolean checkPermissions() {
+        int permissionCamera = ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.CAMERA);
+        int mediaControl = ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.MEDIA_CONTENT_CONTROL);
+        int writeContent = ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        List<String> listPermissionsNeeded = new ArrayList<>();
+        if (permissionCamera != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.CAMERA);}
+        if (mediaControl != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.MEDIA_CONTENT_CONTROL);}
+        if (writeContent != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);}
+        if (!listPermissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), MULTIPLE_REQUEST_PHOTO);
+            return false;}
+        return true;
+    }
+
+    private boolean checkPermissionsGalery() {
+        int read = ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
+        int mediaContent = ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.MEDIA_CONTENT_CONTROL);
+        List<String> listPermissionsNeeded = new ArrayList<>();
+        if (read != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        }
+        if (mediaContent != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.MEDIA_CONTENT_CONTROL);
+        }
+        if (!listPermissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), MULTIPLE_REQUEST_GALLERY);
+            return false;
+        }
+        return true;
     }
 
     // Overriding the activity result function to get the picture from the gallery what the user has selected
@@ -396,19 +427,10 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 saveImage(photoToSet);
                 Toast.makeText(EditorActivity.this, "Image Saved", Toast.LENGTH_SHORT).show();
             } else if (requestCode == SELECT_FILE) {
-                if(data!=null){
-                    uriPathToPicture=data.getData();
-                    try{
-                        photoToSet=MediaStore.Images.Media.getBitmap(this.getContentResolver(),uriPathToPicture);
-                        pathToPicture=saveImage(photoToSet);
-                        productImage.setImageBitmap(photoToSet);
+                photoToSet = (Bitmap) data.getExtras().get("data");
+                productImage.setImageBitmap(photoToSet);
+                saveImage(photoToSet);
 
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
             }
         }
     }
@@ -429,23 +451,16 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             f.createNewFile();
             FileOutputStream fo = new FileOutputStream(f);
             fo.write(bytes.toByteArray());
-            MediaScannerConnection.scanFile(this,new String[]{f.getPath()},
-                    new String[]{"image/jpeg"},null);
+            MediaScannerConnection.scanFile(this, new String[]{f.getPath()},
+                    new String[]{"image/jpeg"}, null);
             fo.close();
-            Log.e("TAG","FILE_SAVEd"+f.getAbsolutePath());
-            pathToPicture=f.getAbsolutePath();
+            Log.e("TAG", "FILE_SAVEd" + f.getAbsolutePath());
+            pathToPicture = f.getAbsolutePath();
 
         } catch (IOException e1) {
             e1.printStackTrace();
         }
         return "";
-    }
-
-    private Uri getImageUri(Context applicationContext, Bitmap photoToSet) {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        photoToSet.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-        String path = MediaStore.Images.Media.insertImage(getContentResolver(), photoToSet, "Title", null);
-        return Uri.parse(path);
     }
 
     // Initalizing loader
@@ -486,7 +501,11 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     }
 
-    final int REQEST_DIAL = 123;
+    final int REQEST_DIAL = 100;
+    final int MULTIPLE_REQUEST_GALLERY = 101;
+    final int MULTIPLE_REQUEST_PHOTO = 102;
+
+
     Intent callReorder;
 
     @Override
@@ -497,6 +516,45 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                     startActivity(callReorder);
                 } else {
                     Toast.makeText(EditorActivity.this, "You dont have permission", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case MULTIPLE_REQUEST_PHOTO:
+                if (grantResults.length > 0) {
+                    boolean camera = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                    boolean write = grantResults[1] == PackageManager.PERMISSION_GRANTED;
+                    boolean medicontrol = grantResults[2] == PackageManager.PERMISSION_GRANTED;
+
+                    if (camera && write && medicontrol) {
+                        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        startActivityForResult(intent, REQUEST_CAMERA);
+                    } else {
+                        Toast.makeText(EditorActivity.this, "You dont have permission to use camera", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                break;
+            case MULTIPLE_REQUEST_GALLERY:
+                if (grantResults.length > 0) {
+                    boolean read = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                    boolean medicontrol = grantResults[1] == PackageManager.PERMISSION_GRANTED;
+
+                    if (read && medicontrol) {
+                        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                        intent.setType("image/*");
+                        intent.setAction(Intent.ACTION_GET_CONTENT);
+                        intent.putExtra("crop", "true");
+                        intent.putExtra("aspectX", 2);
+                        intent.putExtra("aspectY", 1);
+                        intent.putExtra("outputX", 200);
+                        intent.putExtra("outputY", 150);
+                        try {
+                            intent.putExtra("return data", true);
+                            startActivityForResult(intent, SELECT_FILE);
+                        } catch (ActivityNotFoundException e) {
+                            Log.e("Activity", "not found");
+                        }
+                    } else {
+                        Toast.makeText(EditorActivity.this, "You dont have permission to open gallery", Toast.LENGTH_SHORT).show();
+                    }
                 }
                 break;
             default:
@@ -542,12 +600,11 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 public void onClick(View v) {
                     callReorder = new Intent(Intent.ACTION_CALL);
                     callReorder.setData(Uri.parse("tel:" + phone));
-                    int hasDialPermission = ContextCompat.checkSelfPermission(EditorActivity.this,Manifest.permission.CALL_PHONE);
+                    int hasDialPermission = ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.CALL_PHONE);
                     if (hasDialPermission != PackageManager.PERMISSION_GRANTED) {
-                        ActivityCompat.requestPermissions(EditorActivity.this,new String[]{Manifest.permission.CALL_PHONE}, REQEST_DIAL);
+                        ActivityCompat.requestPermissions(EditorActivity.this, new String[]{Manifest.permission.CALL_PHONE}, REQEST_DIAL);
                         return;
-                    }
-                    else{
+                    } else {
                         startActivity(callReorder);
                     }
 
