@@ -51,9 +51,22 @@ Uri currentURi;
 
         mAdapter = new ProductCursorAdapter(this, null);
         itemListView.setAdapter(mAdapter);
+        // Onclick event handler--> goto editing page
         itemListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(MainActivity.this, EditorActivity.class);
+
+                currentURi = ContentUris.withAppendedId(StoreEntry.CONTENT_URI, id);
+                intent.setData(currentURi);
+                startActivity(intent);
+
+            }
+        });
+        // Onclick event handler 2 long touch--> delete item
+        itemListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 TextView helper=(TextView) view.findViewById(R.id.product_quantity);
                 int currentvalue=Integer.parseInt(helper.getText().toString());
 
@@ -68,17 +81,6 @@ Uri currentURi;
                     Uri toBeModified=ContentUris.withAppendedId(StoreEntry.CONTENT_URI,id);
                     int rowsAffected=getContentResolver().delete(toBeModified,helper.getText().toString(),null);
                 }
-
-            }
-        });
-        itemListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(MainActivity.this, EditorActivity.class);
-
-                currentURi = ContentUris.withAppendedId(StoreEntry.CONTENT_URI, id);
-                intent.setData(currentURi);
-                startActivity(intent);
                 return true;
             }
         });

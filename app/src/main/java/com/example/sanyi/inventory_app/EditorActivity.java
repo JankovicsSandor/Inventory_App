@@ -1,24 +1,32 @@
 package com.example.sanyi.inventory_app;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.app.NavUtils;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseIntArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -34,17 +42,23 @@ import android.widget.Toast;
 import com.example.sanyi.inventory_app.data.StoreContract.StoreEntry;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Calendar;
 
 public class EditorActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     //Code to decide which action to be taken
     Integer REQUEST_CAMERA = 1, SELECT_FILE = 0;
     private static final int EXISTING_ITEM_LOADER = 0;
     ImageView productImage;
+    ImageButton reorder;
     Bitmap photoToSet;
     Boolean photoSetted = false;
     Uri uriPathToPicture = null;
     String pathToPicture = "";
-    Boolean needChanges=false;
+    Boolean needChanges = false;
     private boolean ItemHasChanged = false;
     EditText phoneNumber;
     EditText webadress;
@@ -113,7 +127,9 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 break;
             case R.id.save:
                 saveItem();
-                if(!needChanges){finish();}
+                if (!needChanges) {
+                    finish();
+                }
                 return true;
             case android.R.id.home:
                 if (!ItemHasChanged) {
@@ -197,13 +213,15 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         CurrentItemUri = intent.getData();
         if (CurrentItemUri == null) {
             setTitle(getString(R.string.addItem));
-            photoSetted=false;
+            photoSetted = false;
         } else {
             setTitle(getString(R.string.editItem));
             // Display the loader data
             getSupportLoaderManager().initLoader(EXISTING_ITEM_LOADER, null, this);
         }
-
+        if (photoSetted) {
+            productImage.setImageURI(Uri.parse(pathToPicture));
+        }
         // Setting up views
         productImage = (ImageView) findViewById(R.id.itemPictureId);
         itemName = (EditText) findViewById(R.id.NameEditText);
@@ -214,9 +232,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         quantity = (EditText) findViewById(R.id.quantityEditText);
         minusButton = (ImageButton) findViewById(R.id.minusId);
         plusButton = (ImageButton) findViewById(R.id.plusId);
-        if (photoSetted) {
-            productImage.setImageBitmap(photoToSet);
-        }
+        reorder = (ImageButton) findViewById(R.id.callOrder);
+
         // Setting up ontouch listeners
         productImage.setOnTouchListener(touchListener);
         itemName.setOnTouchListener(touchListener);
@@ -267,9 +284,9 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         int supplerId = mSupplier;
         String phoneString = phoneNumber.getText().toString().trim();
         String urlString = webadress.getText().toString().trim();
-        String quantityString=quantity.getText().toString();
-        if(TextUtils.isEmpty(quantityString) || !StoreEntry.isValidnumber(Integer.parseInt(quantityString))){
-            Toast.makeText(this,getString(R.string.quantity_empty),Toast.LENGTH_SHORT).show();
+        String quantityString = quantity.getText().toString();
+        if (TextUtils.isEmpty(quantityString) || !StoreEntry.isValidnumber(Integer.parseInt(quantityString))) {
+            Toast.makeText(this, getString(R.string.quantity_empty), Toast.LENGTH_SHORT).show();
         }
 
         if (CurrentItemUri == null && TextUtils.isEmpty(nameString) && TextUtils.isEmpty(priceString)
@@ -277,10 +294,10 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 && TextUtils.isEmpty(quantityString)) {
             return;
         }
-        if(!TextUtils.isEmpty(nameString) && !TextUtils.isEmpty(priceString)
+        if (!TextUtils.isEmpty(nameString) && !TextUtils.isEmpty(priceString)
                 && !TextUtils.isEmpty(String.valueOf(supplerId)) && !TextUtils.isEmpty(phoneString) && !TextUtils.isEmpty(urlString)
-                && !TextUtils.isEmpty(quantityString) && StoreEntry.isValidnumber(Integer.parseInt(quantityString))){
-            needChanges=false;
+                && !TextUtils.isEmpty(quantityString) && StoreEntry.isValidnumber(Integer.parseInt(quantityString))) {
+            needChanges = false;
             ContentValues values = new ContentValues();
             values.put(StoreEntry.COLUMN_PICTURE_PATH, pathToPicture);
             values.put(StoreEntry.COLUMN_ITEM_NAME, nameString);
@@ -309,27 +326,30 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                     Toast.makeText(this, getString(R.string.succesfull_update), Toast.LENGTH_SHORT).show();
                 }
             }
-        }
-        else if(TextUtils.isEmpty(nameString)){
-            needChanges=true;
-            Toast.makeText(this,getString(R.string.name_empty),Toast.LENGTH_SHORT).show();
-        }
-        else if(TextUtils.isEmpty(priceString) || !StoreEntry.isValidnumber(Integer.parseInt(priceString))){
-            needChanges=true;
-            Toast.makeText(this,getString(R.string.price_empty),Toast.LENGTH_SHORT).show();
-        }
-        else if(TextUtils.isEmpty(phoneString)){
-            needChanges=true;
-            Toast.makeText(this,getString(R.string.phone_empty),Toast.LENGTH_SHORT).show();
-        }
-        else if(TextUtils.isEmpty(urlString)){
-            needChanges=true;
-            Toast.makeText(this,getString(R.string.url_empty),Toast.LENGTH_SHORT).show();
+        } else if (TextUtils.isEmpty(nameString)) {
+            needChanges = true;
+            Toast.makeText(this, getString(R.string.name_empty), Toast.LENGTH_SHORT).show();
+        } else if (TextUtils.isEmpty(priceString) || !StoreEntry.isValidnumber(Integer.parseInt(priceString))) {
+            needChanges = true;
+            Toast.makeText(this, getString(R.string.price_empty), Toast.LENGTH_SHORT).show();
+        } else if (TextUtils.isEmpty(phoneString)) {
+            needChanges = true;
+            Toast.makeText(this, getString(R.string.phone_empty), Toast.LENGTH_SHORT).show();
+        } else if (TextUtils.isEmpty(urlString)) {
+            needChanges = true;
+            Toast.makeText(this, getString(R.string.url_empty), Toast.LENGTH_SHORT).show();
         }
     }
 
+    public void onPermissionsGranted(int requestcode) {
+    }
+
+    private SparseIntArray mErrorString;
+
     // Image selector function
     private void SelectImage() {
+        mErrorString = new SparseIntArray();
+
         final CharSequence[] items = {"Camera", "Gallery", "Cancel"};
         AlertDialog.Builder builder = new AlertDialog.Builder(EditorActivity.this);
         builder.setTitle("Add Image");
@@ -338,14 +358,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             public void onClick(DialogInterface dialog, int i) {
                 if (items[i].equals("Camera")) {
                     Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    intent.putExtra(MediaStore.EXTRA_OUTPUT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString());
-
-                    try {
-                        intent.putExtra("return-data", true);
-                        startActivityForResult(intent, REQUEST_CAMERA);
-                    } catch (ActivityNotFoundException e) {
-                        Log.e("Activity", "not found");
-                    }
+                    startActivityForResult(intent, REQUEST_CAMERA);
 
                 } else if (items[i].equals("Gallery")) {
                     Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -377,25 +390,55 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == REQUEST_CAMERA) {
-                Bundle bundle = data.getExtras();
-                if (bundle != null) {
-                    photoToSet = bundle.getParcelable("data");
-                    // URi path of the picture
-                    uriPathToPicture = getImageUri(getApplicationContext(), photoToSet);
-                    pathToPicture = uriPathToPicture.toString();
-                    productImage.setImageBitmap(photoToSet);
-                }
+                photoSetted = true;
+                photoToSet = (Bitmap) data.getExtras().get("data");
+                productImage.setImageBitmap(photoToSet);
+                saveImage(photoToSet);
+                Toast.makeText(EditorActivity.this, "Image Saved", Toast.LENGTH_SHORT).show();
             } else if (requestCode == SELECT_FILE) {
-                Bundle bundle = data.getExtras();
-                if (bundle != null) {
-                    photoToSet = bundle.getParcelable("data");
-                    // URi path of the picture
-                    uriPathToPicture = getImageUri(getApplicationContext(), photoToSet);
-                    pathToPicture = uriPathToPicture.toString();
-                    productImage.setImageBitmap(photoToSet);
+                if(data!=null){
+                    uriPathToPicture=data.getData();
+                    try{
+                        photoToSet=MediaStore.Images.Media.getBitmap(this.getContentResolver(),uriPathToPicture);
+                        pathToPicture=saveImage(photoToSet);
+                        productImage.setImageBitmap(photoToSet);
+
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
+    }
+
+    public static final String IMAGE_DIRECTORY = "/items";
+
+    // Saving imvage the user took right now to the gallery
+    private String saveImage(Bitmap photoToSet) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        photoToSet.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
+        File wallpaperDirectory = new File(Environment.getExternalStorageDirectory() + IMAGE_DIRECTORY);
+        // creating file if needed
+        if (!wallpaperDirectory.exists()) {
+            wallpaperDirectory.mkdirs();
+        }
+        try {
+            File f = new File(wallpaperDirectory, Calendar.getInstance().getTimeInMillis() + ".jpg");
+            f.createNewFile();
+            FileOutputStream fo = new FileOutputStream(f);
+            fo.write(bytes.toByteArray());
+            MediaScannerConnection.scanFile(this,new String[]{f.getPath()},
+                    new String[]{"image/jpeg"},null);
+            fo.close();
+            Log.e("TAG","FILE_SAVEd"+f.getAbsolutePath());
+            pathToPicture=f.getAbsolutePath();
+
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        return "";
     }
 
     private Uri getImageUri(Context applicationContext, Bitmap photoToSet) {
@@ -443,6 +486,25 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     }
 
+    final int REQEST_DIAL = 123;
+    Intent callReorder;
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQEST_DIAL:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    startActivity(callReorder);
+                } else {
+                    Toast.makeText(EditorActivity.this, "You dont have permission", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+
+    }
+
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         if (data == null || data.getCount() < 1) {
@@ -462,7 +524,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             String imagePath = data.getString(imgpathindex);
             int priceint = data.getInt(priceIndex);
             int supplier = data.getInt(supplierIndex);
-            String phone = data.getString(phoneIndex);
+            final String phone = data.getString(phoneIndex);
             String url = data.getString(urlIndex);
             int quantityint = data.getInt(quantityIndex);
 
@@ -474,7 +536,25 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             phoneNumber.setText(phone);
             webadress.setText(url);
             quantity.setText(String.valueOf(quantityint));
+            reorder.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View v) {
+                    callReorder = new Intent(Intent.ACTION_CALL);
+                    callReorder.setData(Uri.parse("tel:" + phone));
+                    int hasDialPermission = ContextCompat.checkSelfPermission(EditorActivity.this,Manifest.permission.CALL_PHONE);
+                    if (hasDialPermission != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(EditorActivity.this,new String[]{Manifest.permission.CALL_PHONE}, REQEST_DIAL);
+                        return;
+                    }
+                    else{
+                        startActivity(callReorder);
+                    }
+
+                }
+            });
         }
+
     }
 
     @Override
