@@ -43,9 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 
 public class EditorActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     //Code to decide which action to be taken
@@ -352,27 +350,28 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             public void onClick(DialogInterface dialog, int i) {
                 if (items[i].equals("Camera")) {
                     // User has permissions for everything
-                    if (checkPermissions()) {
-                        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                        startActivityForResult(intent, REQUEST_CAMERA);
-                    }
+
+                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(intent, REQUEST_CAMERA);
+                    ActivityCompat.requestPermissions(EditorActivity.this,new String[]{Manifest.permission_group.CAMERA,
+                            Manifest.permission_group.STORAGE},MULTIPLE_REQUEST_PHOTO);
                 } else if (items[i].equals("Gallery")) {
-                    if (checkPermissionsGalery()) {
-                        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                        intent.setType("image/*");
-                        intent.setAction(Intent.ACTION_GET_CONTENT);
-                        intent.putExtra("crop", "true");
-                        intent.putExtra("aspectX", 2);
-                        intent.putExtra("aspectY", 1);
-                        intent.putExtra("outputX", 200);
-                        intent.putExtra("outputY", 150);
-                        try {
-                            intent.putExtra("return data", true);
-                            startActivityForResult(intent, SELECT_FILE);
-                        } catch (ActivityNotFoundException e) {
-                            Log.e("Activity", "not found");
-                        }
+                    ActivityCompat.requestPermissions(EditorActivity.this,new String[]{Manifest.permission_group.STORAGE},MULTIPLE_REQUEST_GALLERY);
+                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    intent.setType("image/*");
+                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                    intent.putExtra("crop", "true");
+                    intent.putExtra("aspectX", 2);
+                    intent.putExtra("aspectY", 1);
+                    intent.putExtra("outputX", 200);
+                    intent.putExtra("outputY", 150);
+                    try {
+                        intent.putExtra("return data", true);
+                        startActivityForResult(intent, SELECT_FILE);
+                    } catch (ActivityNotFoundException e) {
+                        Log.e("Activity", "not found");
                     }
+
                 } else if (items[i].equals("Cancel")) {
                     dialog.dismiss();
                 }
@@ -381,39 +380,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         builder.show();
     }
 
-    private boolean checkPermissions() {
-        int permissionCamera = ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.CAMERA);
-        int mediaControl = ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.MEDIA_CONTENT_CONTROL);
-        int writeContent = ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        List<String> listPermissionsNeeded = new ArrayList<>();
-        if (permissionCamera != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(Manifest.permission.CAMERA);}
-        if (mediaControl != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(Manifest.permission.MEDIA_CONTENT_CONTROL);}
-        if (writeContent != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);}
-        if (!listPermissionsNeeded.isEmpty()) {
-            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), MULTIPLE_REQUEST_PHOTO);
-            return false;}
-        return true;
-    }
 
-    private boolean checkPermissionsGalery() {
-        int read = ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE);
-        int mediaContent = ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.MEDIA_CONTENT_CONTROL);
-        List<String> listPermissionsNeeded = new ArrayList<>();
-        if (read != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-        }
-        if (mediaContent != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(Manifest.permission.MEDIA_CONTENT_CONTROL);
-        }
-        if (!listPermissionsNeeded.isEmpty()) {
-            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), MULTIPLE_REQUEST_GALLERY);
-            return false;
-        }
-        return true;
-    }
 
     // Overriding the activity result function to get the picture from the gallery what the user has selected
     @Override
@@ -522,9 +489,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 if (grantResults.length > 0) {
                     boolean camera = grantResults[0] == PackageManager.PERMISSION_GRANTED;
                     boolean write = grantResults[1] == PackageManager.PERMISSION_GRANTED;
-                    boolean medicontrol = grantResults[2] == PackageManager.PERMISSION_GRANTED;
 
-                    if (camera && write && medicontrol) {
+                    if (camera && write) {
                         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                         startActivityForResult(intent, REQUEST_CAMERA);
                     } else {
@@ -535,9 +501,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             case MULTIPLE_REQUEST_GALLERY:
                 if (grantResults.length > 0) {
                     boolean read = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                    boolean medicontrol = grantResults[1] == PackageManager.PERMISSION_GRANTED;
-
-                    if (read && medicontrol) {
+                    if (read) {
                         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                         intent.setType("image/*");
                         intent.setAction(Intent.ACTION_GET_CONTENT);
@@ -560,7 +524,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             default:
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
-
     }
 
     @Override
