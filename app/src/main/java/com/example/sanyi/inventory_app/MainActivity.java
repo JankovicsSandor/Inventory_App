@@ -33,7 +33,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             startActivity(intent);
         }
     };
-Uri currentURi;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

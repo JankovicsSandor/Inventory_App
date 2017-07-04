@@ -2,13 +2,13 @@ package com.example.sanyi.inventory_app;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
@@ -41,8 +41,10 @@ import com.example.sanyi.inventory_app.data.StoreContract.StoreEntry;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Calendar;
 
 public class EditorActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -52,7 +54,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     ImageView productImage;
     ImageButton reorder;
     Bitmap photoToSet;
-    Boolean photoSetted = false;
     String pathToPicture = "";
     Boolean needChanges = false;
     EditText phoneNumber;
@@ -63,6 +64,17 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     EditText quantity;
     ImageButton minusButton;
     ImageButton plusButton;
+
+    //Declaring which permissions needed
+    String[] permissionsCamera = new String[]{
+            Manifest.permission.CAMERA,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.MEDIA_CONTENT_CONTROL};
+
+    String[] permissionsGalery = new String[]{
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.MEDIA_CONTENT_CONTROL};
     private Uri CurrentItemUri;
     private View.OnClickListener changequantity = new View.OnClickListener() {
         @Override
@@ -84,7 +96,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         if (currentValue > 0) {
             quantity.setText(String.valueOf(currentValue));
         }
-
     }
 
     private int mSupplier;
@@ -162,11 +173,11 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 }
             }
         });
-
+        // Showing the Alert Dialog
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
     }
-
+    // Deleting the item from the database
     private void deleteItem() {
         if (CurrentItemUri != null) {
             int rowsDeleted = getContentResolver().delete(CurrentItemUri, null, null);
@@ -208,15 +219,11 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         CurrentItemUri = intent.getData();
         if (CurrentItemUri == null) {
             setTitle(getString(R.string.addItem));
-            photoSetted = false;
+
         } else {
             setTitle(getString(R.string.editItem));
             // Display the loader data
             getSupportLoaderManager().initLoader(EXISTING_ITEM_LOADER, null, this);
-        }
-        Log.e("PHOTO TO BE SETTED", pathToPicture);
-        if (photoSetted) {
-            productImage.setImageURI(Uri.parse(pathToPicture));
         }
         // Setting up views
         productImage = (ImageView) findViewById(R.id.itemPictureId);
@@ -337,6 +344,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         }
     }
 
+
     // Image selector function
     private void SelectImage() {
 
@@ -347,29 +355,72 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             @Override
             public void onClick(DialogInterface dialog, int i) {
                 if (items[i].equals("Camera")) {
-                    // User has permissions for everything
-
-                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    startActivityForResult(intent, REQUEST_CAMERA);
-                    ActivityCompat.requestPermissions(EditorActivity.this,new String[]{Manifest.permission_group.CAMERA,
-                            Manifest.permission_group.STORAGE},MULTIPLE_REQUEST_PHOTO);
-                } else if (items[i].equals("Gallery")) {
-                    ActivityCompat.requestPermissions(EditorActivity.this,new String[]{Manifest.permission_group.STORAGE},MULTIPLE_REQUEST_GALLERY);
-                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    intent.setType("image/*");
-                    intent.setAction(Intent.ACTION_GET_CONTENT);
-                    intent.putExtra("crop", "true");
-                    intent.putExtra("aspectX", 2);
-                    intent.putExtra("aspectY", 1);
-                    intent.putExtra("outputX", 200);
-                    intent.putExtra("outputY", 150);
-                    try {
-                        intent.putExtra("return data", true);
-                        startActivityForResult(intent, SELECT_FILE);
-                    } catch (ActivityNotFoundException e) {
-                        Log.e("Activity", "not found");
+                    // Checking user has permissions for everything
+                    if (ActivityCompat.checkSelfPermission(EditorActivity.this, permissionsCamera[0]) != PackageManager.PERMISSION_GRANTED
+                            || ActivityCompat.checkSelfPermission(EditorActivity.this, permissionsCamera[1]) != PackageManager.PERMISSION_GRANTED
+                            || ActivityCompat.checkSelfPermission(EditorActivity.this, permissionsCamera[2]) != PackageManager.PERMISSION_GRANTED) {
+                        if (ActivityCompat.shouldShowRequestPermissionRationale(EditorActivity.this, permissionsCamera[0])
+                                || ActivityCompat.shouldShowRequestPermissionRationale(EditorActivity.this, permissionsCamera[1])
+                                || ActivityCompat.shouldShowRequestPermissionRationale(EditorActivity.this, permissionsCamera[2])) {
+                            //Show Information about why you need the permission
+                            AlertDialog.Builder builder = new AlertDialog.Builder(EditorActivity.this);
+                            builder.setTitle("Need Multiple Permissions");
+                            builder.setMessage("This app needs Camera and writing permissions.");
+                            builder.setPositiveButton("Grant", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                    ActivityCompat.requestPermissions(EditorActivity.this, permissionsCamera, MULTIPLE_REQUEST_PHOTO);
+                                }
+                            });
+                            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                }
+                            });
+                            builder.show();
+                        } else {
+                            ActivityCompat.requestPermissions(EditorActivity.this, permissionsCamera, MULTIPLE_REQUEST_PHOTO);
+                        }
+                    } else {
+                        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        startActivityForResult(intent, REQUEST_CAMERA);
                     }
-
+                } else if (items[i].equals("Gallery")) {
+                    // User has permissions for everything
+                    if (ActivityCompat.checkSelfPermission(EditorActivity.this, permissionsGalery[0]) != PackageManager.PERMISSION_GRANTED
+                            || ActivityCompat.checkSelfPermission(EditorActivity.this, permissionsGalery[1]) != PackageManager.PERMISSION_GRANTED
+                            || ActivityCompat.checkSelfPermission(EditorActivity.this, permissionsGalery[2]) != PackageManager.PERMISSION_GRANTED) {
+                        if (ActivityCompat.shouldShowRequestPermissionRationale(EditorActivity.this, permissionsGalery[0])
+                                || ActivityCompat.shouldShowRequestPermissionRationale(EditorActivity.this, permissionsGalery[1])
+                                || ActivityCompat.shouldShowRequestPermissionRationale(EditorActivity.this, permissionsGalery[2])) {
+                            //Show Information about why you need the permission
+                            AlertDialog.Builder builder = new AlertDialog.Builder(EditorActivity.this);
+                            builder.setTitle("Need Multiple Permissions");
+                            builder.setMessage("This app needs read and writing permissions.");
+                            builder.setPositiveButton("Grant", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                    ActivityCompat.requestPermissions(EditorActivity.this, permissionsGalery, MULTIPLE_REQUEST_GALLERY);
+                                }
+                            });
+                            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                }
+                            });
+                            builder.show();
+                        } else {
+                            ActivityCompat.requestPermissions(EditorActivity.this, permissionsGalery, MULTIPLE_REQUEST_GALLERY);
+                        }
+                    } else {
+                        Intent intent = new Intent(Intent.ACTION_PICK);
+                        intent.setType("image/*");
+                        startActivityForResult(intent, SELECT_FILE);
+                    }
                 } else if (items[i].equals("Cancel")) {
                     dialog.dismiss();
                 }
@@ -378,24 +429,27 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         builder.show();
     }
 
-
-
     // Overriding the activity result function to get the picture from the gallery what the user has selected
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == REQUEST_CAMERA) {
-                photoSetted = true;
                 photoToSet = (Bitmap) data.getExtras().get("data");
                 productImage.setImageBitmap(photoToSet);
                 saveImage(photoToSet);
                 Toast.makeText(EditorActivity.this, "Image Saved", Toast.LENGTH_SHORT).show();
             } else if (requestCode == SELECT_FILE) {
-                photoToSet = (Bitmap) data.getExtras().get("data");
-                productImage.setImageBitmap(photoToSet);
+                Uri selected = data.getData();
+                InputStream imagestream = null;
+                try {
+                    imagestream = getContentResolver().openInputStream(selected);
+                } catch (FileNotFoundException e) {
+                    Log.e("File", "Not found");
+                }
+                photoToSet = BitmapFactory.decodeStream(imagestream);
+                productImage.setImageURI(selected);
                 saveImage(photoToSet);
-
             }
         }
     }
@@ -484,39 +538,19 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 }
                 break;
             case MULTIPLE_REQUEST_PHOTO:
-                if (grantResults.length > 0) {
-                    boolean camera = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                    boolean write = grantResults[1] == PackageManager.PERMISSION_GRANTED;
-
-                    if (camera && write) {
-                        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                        startActivityForResult(intent, REQUEST_CAMERA);
-                    } else {
-                        Toast.makeText(EditorActivity.this, "You dont have permission to use camera", Toast.LENGTH_SHORT).show();
-                    }
+                if (ActivityCompat.checkSelfPermission(EditorActivity.this, permissionsCamera[0]) == PackageManager.PERMISSION_GRANTED) {
+                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(intent, REQUEST_CAMERA);
                 }
                 break;
+            // REquesting permissions for using galery
             case MULTIPLE_REQUEST_GALLERY:
-                if (grantResults.length > 0) {
-                    boolean read = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                    if (read) {
-                        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                        intent.setType("image/*");
-                        intent.setAction(Intent.ACTION_GET_CONTENT);
-                        intent.putExtra("crop", "true");
-                        intent.putExtra("aspectX", 2);
-                        intent.putExtra("aspectY", 1);
-                        intent.putExtra("outputX", 200);
-                        intent.putExtra("outputY", 150);
-                        try {
-                            intent.putExtra("return data", true);
-                            startActivityForResult(intent, SELECT_FILE);
-                        } catch (ActivityNotFoundException e) {
-                            Log.e("Activity", "not found");
-                        }
-                    } else {
-                        Toast.makeText(EditorActivity.this, "You dont have permission to open gallery", Toast.LENGTH_SHORT).show();
-                    }
+                if (ActivityCompat.checkSelfPermission(EditorActivity.this, permissionsGalery[0]) == PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(EditorActivity.this, permissionsGalery[1]) == PackageManager.PERMISSION_GRANTED) {
+
+                    Intent intent = new Intent(Intent.ACTION_PICK);
+                    intent.setType("image/*");
+                    startActivityForResult(intent, SELECT_FILE);
                 }
                 break;
             default:

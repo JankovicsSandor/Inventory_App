@@ -74,6 +74,7 @@ public class ProductCursorAdapter extends CursorAdapter {
             }
         }
         final int position=cursor.getPosition();
+        // Setting up the sell button click listener
         sellButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
