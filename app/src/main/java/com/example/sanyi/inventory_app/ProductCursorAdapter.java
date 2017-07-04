@@ -59,7 +59,6 @@ public class ProductCursorAdapter extends CursorAdapter {
         Integer priceValue=cursor.getInt(unitpriceIndex);
         String imagepath=cursor.getString(imageIndex);
         final int quantityResult=cursor.getInt(quantityIndex);
-
         Uri uri=Uri.parse(imagepath);
         image.setImageURI(uri);
         nameTextView.setText(itemName);
@@ -67,7 +66,7 @@ public class ProductCursorAdapter extends CursorAdapter {
         unitPrice.setText(String.valueOf(priceValue)+" EUR");
         total.setText(String.valueOf(priceValue*quantityResult)+" EUR");
         quantity.setText(String.valueOf(quantityResult));
-        if(imagepath!=null && imagepath!=""){
+        if(imagepath!=null || imagepath!=""){
             File f=new File(imagepath);
             if(f.exists()){
                 Drawable drawable=Drawable.createFromPath(imagepath);
@@ -92,7 +91,7 @@ public class ProductCursorAdapter extends CursorAdapter {
                 else{
                     AlertDialog.Builder builder = new AlertDialog.Builder(context);
                     builder.setMessage("Item is about run out do you want to reorder?");
-                    // User selets the discard option
+                    // User want to reorder from it and open editoractivity
                     builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -103,7 +102,7 @@ public class ProductCursorAdapter extends CursorAdapter {
 
                         }
                     });
-                    // User selects the keep edition option
+                    // User doesnt want to reorder from the item
                     builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -116,6 +115,7 @@ public class ProductCursorAdapter extends CursorAdapter {
                         }
                     });
                     AlertDialog alertDialog = builder.create();
+                    alertDialog.setCanceledOnTouchOutside(true);
                     alertDialog.show();
 
 

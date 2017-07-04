@@ -53,10 +53,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     ImageButton reorder;
     Bitmap photoToSet;
     Boolean photoSetted = false;
-    Uri uriPathToPicture = null;
     String pathToPicture = "";
     Boolean needChanges = false;
-    private boolean ItemHasChanged = false;
     EditText phoneNumber;
     EditText webadress;
     EditText itemName;
@@ -94,7 +92,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     private View.OnTouchListener touchListener = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
-            ItemHasChanged = true;
+            needChanges = true;
             return false;
         }
     };
@@ -129,7 +127,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 }
                 return true;
             case android.R.id.home:
-                if (!ItemHasChanged) {
+                if (!needChanges) {
                     NavUtils.navigateUpFromSameTask(EditorActivity.this);
                     return true;
                 }
@@ -453,7 +451,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     @Override
     public void onBackPressed() {
-        if (!ItemHasChanged) {
+        if (!needChanges) {
             super.onBackPressed();
             return;
         }
