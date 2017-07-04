@@ -10,7 +10,6 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -54,7 +53,6 @@ Uri currentURi;
         itemListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.e("Listener","triggered");
                 Intent intent = new Intent(MainActivity.this, EditorActivity.class);
                 Uri currentURi = ContentUris.withAppendedId(StoreEntry.CONTENT_URI, id);
                 intent.setData(currentURi);
