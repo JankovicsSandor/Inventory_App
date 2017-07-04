@@ -26,8 +26,6 @@ public class StoreProvider extends ContentProvider {
     String itemName;
     Integer itemPrice;
     String itemSupplier;
-    String itemPhoneNumber;
-    String itemUrl;
     Integer itemNumber;
     SQLiteDatabase database;
     // setting up a code if we want to get the whole database
