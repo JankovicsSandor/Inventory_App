@@ -1,7 +1,6 @@
 package com.example.sanyi.inventory_app;
 
 import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -16,7 +15,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.example.sanyi.inventory_app.data.StoreContract.StoreEntry;
 
@@ -56,32 +54,10 @@ Uri currentURi;
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(MainActivity.this, EditorActivity.class);
-
                 currentURi = ContentUris.withAppendedId(StoreEntry.CONTENT_URI, id);
                 intent.setData(currentURi);
                 startActivity(intent);
 
-            }
-        });
-        // Onclick event handler 2 long touch--> delete item
-        itemListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                TextView helper=(TextView) view.findViewById(R.id.product_quantity);
-                int currentvalue=Integer.parseInt(helper.getText().toString());
-
-
-                ContentValues values=new ContentValues();
-                values.put(StoreEntry.COLUMN_ITEM_NUMBER,currentvalue-1);
-                if(StoreEntry.isValidnumber(currentvalue-1)){
-                    Uri toBeModified=ContentUris.withAppendedId(StoreEntry.CONTENT_URI,id);
-                    int rowsAffected=getContentResolver().update(toBeModified,values,null,null);
-                }
-                else{
-                    Uri toBeModified=ContentUris.withAppendedId(StoreEntry.CONTENT_URI,id);
-                    int rowsAffected=getContentResolver().delete(toBeModified,helper.getText().toString(),null);
-                }
-                return true;
             }
         });
 
